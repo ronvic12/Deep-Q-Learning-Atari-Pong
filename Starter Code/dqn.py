@@ -48,12 +48,8 @@ class QLearner(nn.Module):
         if random.random() > epsilon:
             state = Variable(torch.FloatTensor(np.float32(state)).unsqueeze(0), requires_grad=True)
             # TODO: Given state, you should write code to get the Q value and chosen action
-        
-
-
-
-
-
+            action = self.state(1)[1]
+            action = int(action)
         else:
             action = random.randrange(self.env.action_space.n)
         return action
@@ -71,9 +67,17 @@ def compute_td_loss(model, target_model, batch_size, gamma, replay_buffer):
     reward = Variable(torch.FloatTensor(reward))
     done = Variable(torch.FloatTensor(done))
     # implement the loss function here
+    #Loss i(Θ i) = (y i− Q(s, a; Θ i))2
+    # do the reward first, 
 
+    # can also call model.forward 
+    q=model(state).gather(action) # should be a pytorch command
+    if done:
+        y = reward
+    else:
+        y = reward + gamma * max(target_model(next_state)) # r + gamma*max(Q(t(s')))
 
-    
+    loss= (y-q)^2
     return loss
 
 
@@ -89,8 +93,8 @@ class ReplayBuffer(object):
 
     def sample(self, batch_size):
         # TODO: Randomly sampling data with specific batch size from the buffer
-
-
+        # take few 
+        print(batch_size)
         return state, action, reward, next_state, done
 
     def __len__(self):

@@ -48,8 +48,11 @@ class QLearner(nn.Module):
         if random.random() > epsilon:
             state = Variable(torch.FloatTensor(np.float32(state)).unsqueeze(0), requires_grad=True)
             # TODO: Given state, you should write code to get the Q value and chosen action
-            action = self.state(1)[1]
-            action = int(action)
+            # action = self.state(1)[1]
+            # action = int(action)
+            #state = self(state).state.detach().cpu().numpy()
+            qval =  self.forward(state)
+            action = torch.argmax(qval)
         else:
             action = random.randrange(self.env.action_space.n)
         return action
@@ -71,13 +74,20 @@ def compute_td_loss(model, target_model, batch_size, gamma, replay_buffer):
     # do the reward first, 
 
     # can also call model.forward 
-    q=model(state).gather(action) # should be a pytorch command
-    if done:
-        y = reward
-    else:
-        y = reward + gamma * max(target_model(next_state)) # r + gamma*max(Q(t(s')))
+    # q=model(state).gather(action) # should be a pytorch command
+    # if done:
+    #     y = reward
+    # else:
+    #     y = reward + gamma * max(target_model(next_state)) # r + gamma*max(Q(t(s')))
 
-    loss= (y-q)^2
+    # loss= (y-q)^2
+    qVals = model(state)
+    targetqVal = target_model(next_state)
+    y = torch.gather(qVals, 1, action.unsqueeze(1)).squeeze(1)
+    nextqVal = targetqVal.max(1)[0]
+    
+    qValue = (reward + gamma * nextqVal) * (1 - done)
+    loss = (y - Variable(qValue.data)).pow(2).mean()
     return loss
 
 
@@ -94,8 +104,10 @@ class ReplayBuffer(object):
     def sample(self, batch_size):
         # TODO: Randomly sampling data with specific batch size from the buffer
         # take few 
-        print(random.sample(batch_size))
-        print(batch_size)
+        samp = random.sample(self.buffer, batch_size)
+        state, action, reward, next_state, done = zip(*samp)
+        state = np.concatenate(state)
+        next_state = np.concatenate(next_state)
         return state, action, reward, next_state, done
 
     def __len__(self):

@@ -51,7 +51,8 @@ class QLearner(nn.Module):
             # action = self.state(1)[1]
             # action = int(action)
             #state = self(state).state.detach().cpu().numpy()
-            qval =  self.forward(state)
+            qval = self(state)
+            qval.detach().numpy()
             action = torch.argmax(qval)
         else:
             action = random.randrange(self.env.action_space.n)
@@ -74,7 +75,8 @@ def compute_td_loss(model, target_model, batch_size, gamma, replay_buffer):
     # do the reward first, 
 
     # can also call model.forward 
-    # q=model(state).gather(action) # should be a pytorch command
+    # q = model(state).gather(action) # should be a pytorch command
+    
     # if done:
     #     y = reward
     # else:
